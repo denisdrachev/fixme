@@ -1,0 +1,210 @@
+Goals
+
+One rainy day, you find out about the FIX Protocol and decide that you want to make a lot of money on the stock exchange by using your programming skills and making the computer do the heavy lifting for you. In order to do this you need some hardcore, lightning fast, enterprise grade tools. You will use these tools to simulate electronic trading and experiment with trading algorythms. You will have 3 independent components that will comunicate over the network:
+• A market component.
+• A broker component.
+• A message router.
+Some key points need to be met in your project in order to develop a winning solution:
+• Use non blocking sockets.
+• Use the java executor framework for message handling.
+• Multi-module Maven build.
+Only a good and clear implementation will be accepted. For this to happen, it will have a clean design, will be easy to read and understand by your peers and will be easy to change in case the requirements are modified.
+
+Chain-of-responsibility pattern
+
+
+
+General instructions
+
+• You are allowed to use language features up to Java 8 included.
+• You are are allowed to use any external libraries, build tools or code generators.
+• Do not use the default package.
+• Create your own relevant packages following the Java package naming conventions.
+• Java is compiled into an intermediate language. This will generate some .class files.
+Do not commit them on your repository!
+• Make sure you have javac and java available as commands in your terminal.
+• Make sure you have the mvn command line tool available, or use one bundled in your IDE.
+• Build the project running the command bellow in the root of your project folder.
+This needs to generate runnable .jar files that can launch each component.
+
+Mandatory part
+
+You need to implement simulation tools for the financial markets that exchange a simplified version of FIX messages. The tools will be able to communicate over a network using the TCP protocol. The focus in this project are not the trading algos (you can experiment with them after the project is finished), but the implementation of a robust and performant messaging platform.
+
+V.1 Router
+
+The router is the central component of your applications. All other components connect to it in order to send messages to other components. The router will perform no buiness logic, it will just dispatch messages to the destination component(s). The router must accept incomming connections from multiple brokers and markets. We call the router a market connetivity provider, because it allows brokers to send messages (in FIX format) to markets, without depending on specific implementation of the market
+
+The router will listen on 2 ports:
+• Port 5000 for messages from Broker components. When a Broker establishes the connection the Router asigns it a unique 6 digit ID and communicates the ID to the Broker.
+• Port 5001 for messages from Market components. When a Market establishes the connection the Router asigns it a unique 6 digit ID and communicates the ID to the Market.
+
+Brokers and Markets will include the assigned ID in all messages for identification and the Router will use the ID to create the routing table.
+
+Once the Router receives a message it will perform 3 steps:
+• Validate the message based on the checkshum.
+• Identify the destination in the routing table.
+• Forward the message.
+
+V.2 Broker
+
+The Broker will send two types of messages:
+• Buy. - An order where the broker wants to buy an instrument
+• Sell. - An order where the broker want to sell an instrument and will receive from the market messages of the following types:
+• Exeuted - when the order was accepted by the market and the action succeeded
+• Rejected - when the order could not be met
+
+V.3 Market
+
+A market has a list of instruments that can be traded. When orders are received from brokers the market tries to execute it. If the execution is successfull, it updates the internal instrument list and sends the broker an Executed message. If the order can’t be met, the market sends a Rejected message.
+The rules by which a market executes orders can be complex and you can play with them. This is why you build the simulator. Some simple rules that you need to respect is that an order can’t be executed if the instrument is not traded on the market or if the demanded quantity is not available (in case of Buy orders).
+
+V.4 FIX Messages
+
+All messages will respect the FIX notation.
+All messages will start with the ID asigned by the router and will be ended by the checksum.
+Buy and Sell messages will have the following mandatory fields:
+• Instrument
+• Quantity
+• Market
+• Price
+
+Chapter VI
+
+Bonus part
+
+Bonus points will be given if:
+• You store all transactions in a database
+• You concieve a fail-over mechanism so that ongoing transactions are restored in case one component goes down.
+
+==================================================================================================================================================================
+
+Цели
+
+В один дождливый день вы узнаете о протоколе FIX и решаете, что хотите заработать много денег на фондовой бирже,
+используя свои навыки программирования и заставляя компьютер делать тяжелую работу за вас.
+Для этого вам понадобятся надежные, молниеносные инструменты корпоративного уровня.
+Вы будете использовать эти инструменты для моделирования электронной торговли и экспериментировать с торговыми алгоритмами.
+
+У вас будет 3 независимых компонента, которые будут взаимодействовать по сети:
+• рыночная составляющая.
+• Брокерский компонент.
+• Маршрутизатор сообщений.
+
+В вашем проекте необходимо учесть некоторые ключевые моменты, чтобы разработать выигрышное решение:
+• Используйте неблокирующие розетки.
+• Используйте среду исполнения java для обработки сообщений.
+• Мультимодульная сборка Maven.
+
+Будет принята только хорошая и четкая реализация.
+Для этого он должен иметь чистый дизайн, его будет легко читать и понимать ваши коллеги,
+и его можно будет легко изменить в случае изменения требований.
+
+Схема цепочки ответственности
+
+
+Основные инструкции
+
+• Вам разрешено использовать языковые функции вплоть до Java 8.
+• Вам разрешается использовать любые внешние библиотеки, инструменты сборки или генераторы кода.
+• Не используйте пакет по умолчанию.
+• Создавайте собственные соответствующие пакеты, следуя соглашениям об именах пакетов Java.
+• Java компилируется в промежуточный язык. Это создаст несколько файлов .class.
+Не фиксируйте их в своем репозитории!
+• Убедитесь, что в вашем терминале доступны javac и java в виде команд.
+• Убедитесь, что у вас есть инструмент командной строки mvn, или используйте его в составе IDE.
+• Создайте проект, выполнив приведенную ниже команду в корне папки проекта.
+Это необходимо для создания исполняемых файлов .jar, которые могут запускать каждый компонент.
+
+Обязательная часть
+
+Вам необходимо реализовать инструменты моделирования финансовых рынков, которые обмениваются упрощенной версией сообщений FIX.
+Инструменты смогут обмениваться данными по сети с использованием протокола TCP.
+Основное внимание в этом проекте уделяется не алгоритмам торговли (вы можете поэкспериментировать с ними после завершения проекта),
+а реализации надежной и производительной платформы обмена сообщениями.
+
+Маршрутизатор V.1
+
+Маршрутизатор - это центральный компонент ваших приложений. Все остальные компоненты подключаются к нему,
+чтобы отправлять сообщения другим компонентам. Маршрутизатор не будет выполнять никакой бизнес-логики,
+он просто будет отправлять сообщения компоненту (ам) назначения.
+Маршрутизатор должен принимать входящие соединения от нескольких брокеров и рынков.
+Мы называем маршрутизатор поставщиком услуг связи с рынком, потому что он позволяет брокерам отправлять сообщения (в формате FIX) на рынки,
+независимо от конкретной реализации рынка.
+
+Маршрутизатор будет прослушивать 2 порта:
+• Порт 5000 для сообщений от компонентов брокера. Когда брокер устанавливает соединение,
+маршрутизатор присваивает ему уникальный 6-значный идентификатор и передает его брокеру.
+• Порт 5001 для сообщений от компонентов Маркета. Когда Маркет устанавливает соединение,
+Маршрутизатор присваивает ему уникальный 6-значный идентификатор и передает его на Маркет.
+
+Брокеры и рынки будут включать назначенный идентификатор во все сообщения для идентификации,
+а маршрутизатор будет использовать этот идентификатор для создания таблицы маршрутизации.
+
+Как только маршрутизатор получит сообщение, он выполнит 3 шага:
+• Проверить сообщение на основе контрольной суммы.
+• Определите пункт назначения в таблице маршрутизации.
+• Переслать сообщение.
+
+V.2 Брокер
+
+Брокер отправляет два типа сообщений:
+• Купить. - Ордер, по которому брокер хочет купить инструмент
+• Продать. - Ордер, в котором брокер хочет продать инструмент и будет получать от рынка сообщения следующих типов:
+• Выполнено - когда ордер был принят рынком и действие выполнено успешно.
+• Отклонено - когда заказ не может быть выполнен
+
+V.3 Рынок
+
+На рынке есть список инструментов, которыми можно торговать. При поступлении ордеров от брокеров рынок пытается их исполнить.
+Если выполнение выполнено успешно, он обновляет внутренний список инструментов и отправляет брокеру сообщение «Выполнено».
+Если заказ не может быть выполнен, рынок отправляет сообщение "Отклонено".
+
+Правила, по которым рынок исполняет ордера, могут быть сложными, и вы можете с ними играть. Вот почему вы строите симулятор.
+Вы должны соблюдать несколько простых правил: ордер не может быть выполнен, если инструмент не торгуется на рынке или если
+требуемое количество недоступно (в случае ордеров на покупку).
+
+Сообщения FIX V.4
+
+Все сообщения будут соответствовать нотации FIX.
+Все сообщения будут начинаться с идентификатора, присвоенного маршрутизатором, и завершаться контрольной суммой.
+Сообщения о покупке и продаже будут иметь следующие обязательные поля:
+• Инструмент
+• Количество
+• Рынок
+• Цена
+
+Глава VI.
+
+Бонусная часть
+
+Бонусные баллы будут начислены, если:
+• Вы храните все транзакции в базе данных
+• Вы реализуете механизм переключения при отказе, чтобы текущие транзакции восстанавливались в случае отказа одного из компонентов.
+
+==================================================================================================================
+
+1) Все сообщения будут соответствовать FIX нотации. Что такое фикс нотация? Сообщения о регистрации брокера/рынка - тоже будут иметь ФИКС нотацию?
+2) С каким рынком будет работать брокер?
+3) Может ли брокер выбирать рынок?
+4) Могут ли брокеры получать цены с рынка?
+
+
+ фреймворке Executor
+
+
+
+- Брокер
+    - id
+    -
+
+- Роутер
+    - хранилище брокеров
+    - хранилище рынков
+    - база транзакций
+
+- Рынок
+    - id
+    - инструмент
+    - цена
+    - количество
