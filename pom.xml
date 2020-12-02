@@ -11,6 +11,7 @@
     <modules>
         <module>Router</module>
         <module>Broker</module>
+        <module>Market</module>
     </modules>
 
 

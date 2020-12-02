@@ -1,4 +1,4 @@
-package ru.bloker;
+package ru.market;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -9,11 +9,11 @@ import java.util.Scanner;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-public class NioClient {
+public class Market {
 
-    static final int PORT = 9090;
+    static final int PORT = 5001;
     static final String ADDRESS = "localhost";
-    private ByteBuffer buffer = ByteBuffer.allocate(16);
+    private ByteBuffer buffer = ByteBuffer.allocate(1024);
 
     private void run() throws Exception {
         System.out.println("Start!");
@@ -23,25 +23,25 @@ public class NioClient {
         Selector selector = Selector.open();
         channel.register(selector, SelectionKey.OP_CONNECT); //здесь объединяются селектор и канал (и вид активности: коннект)
         channel.connect(new InetSocketAddress(ADDRESS, PORT));
-        BlockingQueue<String> queue = new ArrayBlockingQueue<>(2);
+        BlockingQueue<String> queue = new ArrayBlockingQueue<>(10);
 
-        new Thread(() -> {
-            Scanner scanner = new Scanner(System.in);
-            while (true) {
-                String line = scanner.nextLine();
-                if ("q".equals(line)) {
-                    System.exit(0);
-                }
-                try {
-                    queue.put(line);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                SelectionKey key = channel.keyFor(selector);
-                key.interestOps(SelectionKey.OP_WRITE);
-                selector.wakeup();
-            }
-        }).start();
+//        new Thread(() -> {
+//            Scanner scanner = new Scanner(System.in);
+//            while (true) {
+//                String line = scanner.nextLine();
+//                if ("q".equals(line)) {
+//                    System.exit(0);
+//                }
+//                try {
+//                    queue.put(line);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//                SelectionKey key = channel.keyFor(selector);
+//                key.interestOps(SelectionKey.OP_WRITE);
+//                selector.wakeup();
+//            }
+//        }).start();
 
         while (true) {
             selector.select();
@@ -61,11 +61,10 @@ public class NioClient {
                     selectionKey.interestOps(SelectionKey.OP_READ);
                 }
             }
-            selector.selectedKeys().clear();
         }
     }
 
     public static void main(String[] args) throws Exception {
-        new NioClient().run();
+        new Market().run();
     }
 }
