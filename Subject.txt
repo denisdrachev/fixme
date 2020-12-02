@@ -188,6 +188,30 @@ V.3 Рынок
 2) С каким рынком будет работать брокер?
 3) Может ли брокер выбирать рынок?
 4) Могут ли брокеры получать цены с рынка?
+5) Контрольная сумма:
+	String input = "Java Code Geeks - Java Examples";
+
+            // get bytes from string
+            byte bytes[] = input.getBytes();
+
+            Checksum checksum = new CRC32();
+
+            // update the current checksum with the specified array of bytes
+            checksum.update(bytes, 0, bytes.length);
+
+            // get the current checksum value
+            long checksumValue = checksum.getValue();
+
+            System.out.println("CRC32 checksum for input string is: " + checksumValue);
+
+6) Как узнать длину сообщения?
+7) Есть ли чек лист?
+8) Нужен ли способ управлять брокером??
+9) Как наполнять рынок?
+10) Как рынки связаны между собой?
+11) Как должно выглядеть сообщение? Json? Text? byte[]? На свое усмотрение?
+12) Все сообщения должны быть в фикс формате? (только между рынками и брокерами)
+13) Для получения инфы по инструментам рынка, сообщение тоже должно быть в FIX формате?
 
 
  фреймворке Executor

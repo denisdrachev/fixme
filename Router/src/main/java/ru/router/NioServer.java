@@ -1,5 +1,7 @@
 package ru.router;
 
+import lombok.SneakyThrows;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -13,32 +15,35 @@ import java.util.*;
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static ru.router.ChangeRequest.CHANGEOPS;
 
-public class NioServer {
+public class NioServer implements Runnable {
     private Selector selector;
     private ByteBuffer readBuffer = ByteBuffer.allocate(8192);
     private EchoWorker worker = new EchoWorker();
     private final List<ChangeRequest> changeRequests = new LinkedList();
     private final Map<SocketChannel, List<ByteBuffer>> pendingData = new HashMap<>();
-    static final int PORT = 9090;
+    static final int PORT_BROKER = 5000;
+    static final int PORT_MARKET = 5001;
     static final String ADDRESS = "localhost";
 
 
-    private NioServer() throws IOException {
+    private NioServer(String address, int port) throws IOException {
         ServerSocketChannel serverChannel = ServerSocketChannel.open();
         serverChannel.configureBlocking(false);
-        InetSocketAddress isa = new InetSocketAddress(ADDRESS, PORT);
+        InetSocketAddress isa = new InetSocketAddress(address, port);
         serverChannel.socket().bind(isa);
         selector = SelectorProvider.provider().openSelector();
         serverChannel.register(selector, SelectionKey.OP_ACCEPT);
         new Thread(worker).start();
-
     }
 
     public static void main(String[] args) throws IOException {
-        new NioServer().run();
+        new Thread(new NioServer(ADDRESS, PORT_BROKER)).start();
+//        new Thread(new NioServer(ADDRESS, PORT_MARKET)).start();
+        new NioServer(ADDRESS, PORT_MARKET).run();
     }
 
-    private void run() throws IOException {
+    @SneakyThrows
+    public void run() {
         while (true) {
             synchronized (changeRequests) {
                 for (ChangeRequest change : changeRequests) {

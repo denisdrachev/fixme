@@ -25,23 +25,23 @@ public class Market {
         channel.connect(new InetSocketAddress(ADDRESS, PORT));
         BlockingQueue<String> queue = new ArrayBlockingQueue<>(10);
 
-//        new Thread(() -> {
-//            Scanner scanner = new Scanner(System.in);
-//            while (true) {
-//                String line = scanner.nextLine();
-//                if ("q".equals(line)) {
-//                    System.exit(0);
-//                }
-//                try {
-//                    queue.put(line);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//                SelectionKey key = channel.keyFor(selector);
-//                key.interestOps(SelectionKey.OP_WRITE);
-//                selector.wakeup();
-//            }
-//        }).start();
+        new Thread(() -> {
+            Scanner scanner = new Scanner(System.in);
+            while (true) {
+                String line = scanner.nextLine();
+                if ("q".equals(line)) {
+                    System.exit(0);
+                }
+                try {
+                    queue.put(line);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                SelectionKey key = channel.keyFor(selector);
+                key.interestOps(SelectionKey.OP_WRITE);
+                selector.wakeup();
+            }
+        }).start();
 
         while (true) {
             selector.select();
@@ -61,6 +61,7 @@ public class Market {
                     selectionKey.interestOps(SelectionKey.OP_READ);
                 }
             }
+            selector.selectedKeys().clear();
         }
     }
 

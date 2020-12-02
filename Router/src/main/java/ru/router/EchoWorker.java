@@ -9,6 +9,9 @@ public class EchoWorker implements Runnable {
     private final List<ServerDataEvent> queue = new LinkedList();
 
     void processData(NioServer server, SocketChannel socket, byte[] data, int count) {
+        if (count == -1)
+            return;
+        System.out.println("COUNT: " + count);
         byte[] dataCopy = new byte[count];
         System.arraycopy(data, 0, dataCopy, 0, count);
         synchronized (queue) {
@@ -33,7 +36,8 @@ public class EchoWorker implements Runnable {
                 System.out.println("Received = " + new String(queue.get(0).data));
                 dataEvent = queue.remove(0);
             }
-            dataEvent.server.send(dataEvent.socket, dataEvent.data);
+            if (dataEvent.data.length > 0)
+                dataEvent.server.send(dataEvent.socket, dataEvent.data);
         }
     }
 }

@@ -1,5 +1,7 @@
 package ru.bloker;
 
+import ru.bloker.message.Fix;
+
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -11,7 +13,7 @@ import java.util.concurrent.BlockingQueue;
 
 public class NioClient {
 
-    static final int PORT = 9090;
+    static final int PORT = 5000;
     static final String ADDRESS = "localhost";
     private ByteBuffer buffer = ByteBuffer.allocate(16);
 
