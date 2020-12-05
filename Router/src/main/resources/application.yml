@@ -1,0 +1,6 @@
+market:
+  port: 5001
+  address: localhost
+broker:
+  port: 5000
+  address: localhost

@@ -1,7 +1,10 @@
 package ru.router;
 
+import lombok.Getter;
+
 import java.nio.channels.SocketChannel;
 
+@Getter
 public class ChangeRequest {
 
     public static final int CHANGEOPS = 1;
