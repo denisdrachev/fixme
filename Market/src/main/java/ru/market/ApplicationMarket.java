@@ -1,13 +1,10 @@
 package ru.market;
 
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import java.nio.ByteBuffer;
-
 @SpringBootApplication
-public class Application/* implements CommandLineRunner*/ {
+public class ApplicationMarket/* implements CommandLineRunner*/ {
 /*
     @Override
     public void run(String... args) throws Exception {
@@ -63,6 +60,6 @@ public class Application/* implements CommandLineRunner*/ {
 
     public static void main(String[] args) throws Exception {
 //        new Market().run();
-        SpringApplication.run(Application.class, args);
+        SpringApplication.run(ApplicationMarket.class, args);
     }
 }

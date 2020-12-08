@@ -1,10 +1,9 @@
 package ru.router.service;
 
 import lombok.SneakyThrows;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.router.ChangeRequest;
-import ru.router.EchoWorker;
-import ru.router.config.ConfigProperties;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -13,32 +12,45 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static ru.router.ChangeRequest.CHANGEOPS;
 
 @Service
-public class IOBrokerService {
+public class IOBrokerService implements IOInterface, Runnable {
 
-    private Selector selector;
+    private IOMarketService marketService;
+    private Selector brokerSelector;
+    private Selector marketSelector;
     private ByteBuffer readBuffer = ByteBuffer.allocate(8192);
-    private EchoWorker worker = new EchoWorker();
     private final List<ChangeRequest> changeRequests = new LinkedList();
     private final Map<SocketChannel, List<ByteBuffer>> pendingData = new HashMap<>();
+    private final SenderService senderService = new SenderService();
+    ExecutorService executor = Executors.newFixedThreadPool(10);
 
-    public IOBrokerService(BrokerConnectorService connectorService) {
-        selector = connectorService.getSelector();
-        run();
+    private SocketChannel marketChannel;
+
+    @Autowired
+    public IOBrokerService(BrokerConnectorService brokerConnectorService, MarketConnectorService marketConnectorService, IOMarketService marketService /*, SenderService senderService*/) {
+        this.marketService = marketService;
+        marketSelector = marketConnectorService.getSelector();
+        brokerSelector = brokerConnectorService.getSelector();
+        marketChannel = marketConnectorService.getChannel();
+        executor.execute(senderService);
+        executor.execute(this);
     }
 
+    @Override
     @SneakyThrows
-    private void run() {
+    public void run() {
         while (true) {
             synchronized (changeRequests) {
                 for (ChangeRequest change : changeRequests) {
                     switch (change.type) {
                         case CHANGEOPS:
-                            SelectionKey key = change.getChannel().keyFor(selector);
+                            SelectionKey key = change.getChannel().keyFor(brokerSelector);
                             key.interestOps(change.getOps());
                             break;
                         default:
@@ -46,8 +58,8 @@ public class IOBrokerService {
                 }
                 changeRequests.clear();
             }
-            selector.select();
-            Iterator<SelectionKey> selectedKeys = selector.selectedKeys().iterator();
+            brokerSelector.select();
+            Iterator<SelectionKey> selectedKeys = brokerSelector.selectedKeys().iterator();
             while (selectedKeys.hasNext()) {
                 SelectionKey key = selectedKeys.next();
                 selectedKeys.remove();
@@ -70,14 +82,15 @@ public class IOBrokerService {
         ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
         SocketChannel socketChannel = serverSocketChannel.accept();
         socketChannel.configureBlocking(false);
-        socketChannel.register(selector, SelectionKey.OP_READ);
+        socketChannel.register(brokerSelector, SelectionKey.OP_READ);
     }
 
     private void read(SelectionKey key) throws IOException {
         SocketChannel socketChannel = (SocketChannel) key.channel();
         readBuffer.clear();
         int numRead = socketChannel.read(readBuffer);
-        worker.processData(this, socketChannel, readBuffer.array(), numRead);
+        System.out.println("Router income: " + new String(readBuffer.array()));
+        senderService.processData(marketService, marketChannel, readBuffer.array(), numRead);
     }
 
     private void write(SelectionKey key) throws IOException {
@@ -90,7 +103,7 @@ public class IOBrokerService {
                 if (buf.remaining() > 0) {
                     break;
                 }
-                System.out.println("Send echo = " + new String(buf.array()));
+                System.out.println("IOBrokerService Send echo = " + new String(buf.array()));
                 queue.remove(0);
             }
             if (queue.isEmpty()) {
@@ -99,7 +112,7 @@ public class IOBrokerService {
         }
     }
 
-    void send(SocketChannel socket, byte[] data) {
+    public void send(SocketChannel socket, byte[] data) {
         synchronized (changeRequests) {
             changeRequests.add(new ChangeRequest(socket, CHANGEOPS, OP_WRITE));
             synchronized (pendingData) {
@@ -111,6 +124,6 @@ public class IOBrokerService {
                 queue.add(ByteBuffer.wrap(data));
             }
         }
-        selector.wakeup();
+        brokerSelector.wakeup();
     }
 }

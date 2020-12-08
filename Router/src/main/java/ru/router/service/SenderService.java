@@ -1,21 +1,31 @@
-package ru.router;
+package ru.router.service;
+
+import org.springframework.stereotype.Service;
+import ru.router.ServerDataEvent;
 
 import java.nio.channels.SocketChannel;
 import java.util.LinkedList;
 import java.util.List;
 
-public class EchoWorker implements Runnable {
+//@Service
+public class SenderService implements Runnable {
 
-    private final List<ServerDataEvent2> queue = new LinkedList();
+    public SenderService() {
+        System.out.println("SenderService start...");
+//        new Thread(this).run();
+        System.out.println("SenderService started");
+    }
 
-    public void processData(NioServer server, SocketChannel socket, byte[] data, int count) {
+    private final List<ServerDataEvent> queue = new LinkedList();
+
+    public void processData(IOInterface server, SocketChannel socket, byte[] data, int count) {
         if (count == -1)
             return;
         System.out.println("COUNT: " + count);
         byte[] dataCopy = new byte[count];
         System.arraycopy(data, 0, dataCopy, 0, count);
         synchronized (queue) {
-            queue.add(new ServerDataEvent2(server, socket, dataCopy));
+            queue.add(new ServerDataEvent(server, socket, dataCopy));
             queue.notify();
         }
     }
@@ -23,7 +33,8 @@ public class EchoWorker implements Runnable {
 
     @Override
     public void run() {
-        ServerDataEvent2 dataEvent;
+        System.err.println("1");
+        ServerDataEvent dataEvent;
         while (true) {
             synchronized (queue) {
                 while (queue.isEmpty()) {

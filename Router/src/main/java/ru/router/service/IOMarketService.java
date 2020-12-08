@@ -1,9 +1,9 @@
 package ru.router.service;
 
 import lombok.SneakyThrows;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.router.ChangeRequest;
-import ru.router.EchoWorker;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -12,32 +12,47 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static ru.router.ChangeRequest.CHANGEOPS;
 
 @Service
-public class IOMarketService {
+public class IOMarketService implements IOInterface, Runnable {
 
+    private Selector marketSelector;
+    private Selector brokerSelector;
     private Selector selector;
     private ByteBuffer readBuffer = ByteBuffer.allocate(8192);
-    private EchoWorker worker = new EchoWorker();
     private final List<ChangeRequest> changeRequests = new LinkedList();
     private final Map<SocketChannel, List<ByteBuffer>> pendingData = new HashMap<>();
+    private final SenderService senderService = new SenderService();
+    ExecutorService executor = Executors.newFixedThreadPool(10);
 
-    public IOMarketService(MarketConnectorService connectorService) {
-        selector = connectorService.getSelector();
-        run();
+    private SocketChannel blockerChannel;
+
+    @Autowired
+    public IOMarketService(BrokerConnectorService brokerConnectorService, MarketConnectorService marketConnectorService) {
+        System.out.println("IOMarketService");
+//        selector = connectorService.getSelector();
+        marketSelector = marketConnectorService.getSelector();
+        brokerSelector = brokerConnectorService.getSelector();
+        blockerChannel = brokerConnectorService.getChannel();
+        executor.execute(senderService);
+        executor.execute(this);
+//        new Thread(this).run();
     }
 
     @SneakyThrows
+    @Override
     public void run() {
         while (true) {
             synchronized (changeRequests) {
                 for (ChangeRequest change : changeRequests) {
                     switch (change.type) {
                         case CHANGEOPS:
-                            SelectionKey key = change.getChannel().keyFor(selector);
+                            SelectionKey key = change.getChannel().keyFor(marketSelector);
                             key.interestOps(change.getOps());
                             break;
                         default:
@@ -45,8 +60,8 @@ public class IOMarketService {
                 }
                 changeRequests.clear();
             }
-            selector.select();
-            Iterator<SelectionKey> selectedKeys = selector.selectedKeys().iterator();
+            marketSelector.select();
+            Iterator<SelectionKey> selectedKeys = marketSelector.selectedKeys().iterator();
             while (selectedKeys.hasNext()) {
                 SelectionKey key = selectedKeys.next();
                 selectedKeys.remove();
@@ -69,14 +84,15 @@ public class IOMarketService {
         ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
         SocketChannel socketChannel = serverSocketChannel.accept();
         socketChannel.configureBlocking(false);
-        socketChannel.register(selector, SelectionKey.OP_READ);
+        socketChannel.register(marketSelector, SelectionKey.OP_READ);
     }
 
     private void read(SelectionKey key) throws IOException {
         SocketChannel socketChannel = (SocketChannel) key.channel();
         readBuffer.clear();
         int numRead = socketChannel.read(readBuffer);
-        worker.processData(this, socketChannel, readBuffer.array(), numRead);
+        System.err.println("IOMarketService: " + new String(readBuffer.array()));
+        senderService.processData(this, blockerChannel, readBuffer.array(), numRead);
     }
 
     private void write(SelectionKey key) throws IOException {
@@ -89,7 +105,7 @@ public class IOMarketService {
                 if (buf.remaining() > 0) {
                     break;
                 }
-                System.out.println("Send echo = " + new String(buf.array()));
+                System.out.println("IOMarketService Send echo = " + new String(buf.array()));
                 queue.remove(0);
             }
             if (queue.isEmpty()) {
@@ -98,7 +114,7 @@ public class IOMarketService {
         }
     }
 
-    void send(SocketChannel socket, byte[] data) {
+    public void send(SocketChannel socket, byte[] data) {
         synchronized (changeRequests) {
             changeRequests.add(new ChangeRequest(socket, CHANGEOPS, OP_WRITE));
             synchronized (pendingData) {
@@ -110,6 +126,6 @@ public class IOMarketService {
                 queue.add(ByteBuffer.wrap(data));
             }
         }
-        selector.wakeup();
+        marketSelector.wakeup();
     }
 }

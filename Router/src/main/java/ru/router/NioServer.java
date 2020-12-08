@@ -1,6 +1,12 @@
 package ru.router;
 
+import lombok.Getter;
 import lombok.SneakyThrows;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import ru.router.chain.*;
+import ru.router.model.Fix;
+import ru.router.repositories.TransactionRepository;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -11,11 +17,14 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static java.nio.channels.SelectionKey.OP_WRITE;
 import static ru.router.ChangeRequest.CHANGEOPS;
 
+@SpringBootApplication
 public class NioServer implements Runnable {
+
     private Selector selector;
     private ByteBuffer readBuffer = ByteBuffer.allocate(8192);
     private EchoWorker worker = new EchoWorker();
@@ -24,7 +33,14 @@ public class NioServer implements Runnable {
     static final int PORT_BROKER = 5000;
     static final int PORT_MARKET = 5001;
     static final String ADDRESS = "localhost";
+    private static int index = 100000;
+    private final Chain chain;
 
+    @Autowired
+    private TransactionRepository repository;
+
+    @Getter
+    private static Map<String, SocketChannel> channelMap = new ConcurrentHashMap<>();
 
     private NioServer(String address, int port) throws IOException {
         ServerSocketChannel serverChannel = ServerSocketChannel.open();
@@ -33,6 +49,16 @@ public class NioServer implements Runnable {
         serverChannel.socket().bind(isa);
         selector = SelectorProvider.provider().openSelector();
         serverChannel.register(selector, SelectionKey.OP_ACCEPT);
+
+        Transactor transactor = new Transactor();
+        Sider sider = new Sider();
+        Sender sender = new Sender();
+
+        chain = new Validator();
+        chain.setNext(sider);
+        chain.getNext().setNext(transactor);
+        chain.getNext().getNext().setNext(sender);
+
         new Thread(worker).start();
     }
 
@@ -75,19 +101,37 @@ public class NioServer implements Runnable {
             }
         }
     }
-
     private void accept(SelectionKey key) throws IOException {
         ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
         SocketChannel socketChannel = serverSocketChannel.accept();
         socketChannel.configureBlocking(false);
         socketChannel.register(selector, SelectionKey.OP_READ);
+        socketChannel.write(ByteBuffer.wrap(String.valueOf(index).getBytes()));
+        channelMap.put(String.valueOf(index), socketChannel);
+        index++;
     }
 
+    @SneakyThrows
     private void read(SelectionKey key) throws IOException {
         SocketChannel socketChannel = (SocketChannel) key.channel();
         readBuffer.clear();
         int numRead = socketChannel.read(readBuffer);
-        worker.processData(this, socketChannel, readBuffer.array(), numRead);
+
+//        byte[] dataCopy = new byte[numRead];
+//        System.arraycopy(readBuffer.array(), 0, dataCopy, 0, numRead);
+        try {
+            Fix fix = new Fix(readBuffer.array(), numRead);
+            System.err.println(fix);
+            chain.handle(fix);
+//            SocketChannel socketChannel1 = channelMap.get(fix.getBrokerId());
+//            socketChannel1.write(ByteBuffer.wrap("responce".getBytes()));
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+
+
+//        Thread.sleep(5000);
+//        worker.processData(this, socketChannel, readBuffer.array(), numRead);
     }
 
     private void write(SelectionKey key) throws IOException {
@@ -109,7 +153,7 @@ public class NioServer implements Runnable {
         }
     }
 
-    void send(SocketChannel socket, byte[] data) {
+    public void send(SocketChannel socket, byte[] data) {
         synchronized (changeRequests) {
             changeRequests.add(new ChangeRequest(socket, CHANGEOPS, OP_WRITE));
             synchronized (pendingData) {

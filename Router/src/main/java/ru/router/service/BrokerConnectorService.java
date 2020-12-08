@@ -32,5 +32,6 @@ public class BrokerConnectorService {
         serverChannel.socket().bind(isa);
         selector = SelectorProvider.provider().openSelector();
         serverChannel.register(selector, SelectionKey.OP_ACCEPT);
+        System.out.println("Broker server started");
     }
 }
