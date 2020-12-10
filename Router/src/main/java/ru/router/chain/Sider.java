@@ -1,9 +1,8 @@
 package ru.router.chain;
 
 import lombok.Data;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import ru.router.NioServer;
+import ru.router.Action;
 import ru.router.model.Fix;
 
 @Data
@@ -20,14 +19,15 @@ public class Sider implements Chain {
     }
 
     private boolean initSide(Fix message) {
-        if (message.getDealType().equals("1") || message.getDealType().equals("2")) {
-            if (NioServer.getChannelMap().containsKey(message.getMarketId())) {
+        if ("1".equals(message.getDealType()) || "2".equals(message.getDealType())) {
+            if (Action.channelMap.containsKey(message.getMarketId())) {
                 message.setSide(message.getMarketId());
                 return true;
             }
-        } else if (message.getDealType().equals("3") || message.getDealType().equals("4")) {
-            if (NioServer.getChannelMap().containsKey(message.getBrokerId())) {
+        } else if ("3".equals(message.getDealType()) || "4".equals(message.getDealType())) {
+            if (Action.channelMap.containsKey(message.getBrokerId())) {
                 message.setSide(message.getBrokerId());
+                return true;
             }
         }
         log.info("Invalid side");

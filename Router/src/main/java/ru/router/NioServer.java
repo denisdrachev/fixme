@@ -1,43 +1,22 @@
 package ru.router;
 
-import lombok.Getter;
-import lombok.SneakyThrows;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import ru.router.chain.*;
-import ru.router.model.Fix;
-import ru.router.repositories.TransactionRepository;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-import java.nio.channels.spi.SelectorProvider;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static java.nio.channels.SelectionKey.OP_WRITE;
-import static ru.router.ChangeRequest.CHANGEOPS;
 
 @SpringBootApplication
-public class NioServer implements Runnable {
+public class NioServer /*implements Runnable*/ {
 
-    private Selector selector;
+    public static void main(String[] args) {
+        SpringApplication.run(NioServer.class, args);
+    }
+
+    /*private Selector selector;
     private ByteBuffer readBuffer = ByteBuffer.allocate(8192);
     private EchoWorker worker = new EchoWorker();
     private final List<ChangeRequest> changeRequests = new LinkedList();
-    private final Map<SocketChannel, List<ByteBuffer>> pendingData = new HashMap<>();
-    static final int PORT_BROKER = 5000;
-    static final int PORT_MARKET = 5001;
-    static final String ADDRESS = "localhost";
-    private static int index = 100000;
-    private final Chain chain;
 
-    @Autowired
-    private TransactionRepository repository;
+    public static int index = 100000;
+    private final Chain chain;
 
     @Getter
     private static Map<String, SocketChannel> channelMap = new ConcurrentHashMap<>();
@@ -96,7 +75,8 @@ public class NioServer implements Runnable {
                 } else if (key.isReadable()) {
                     read(key);
                 } else if (key.isWritable()) {
-                    write(key);
+                    System.out.println("key.isWritable() WOW");
+//                    write(key);
                 }
             }
         }
@@ -112,28 +92,20 @@ public class NioServer implements Runnable {
     }
 
     @SneakyThrows
-    private void read(SelectionKey key) throws IOException {
+    private void read(SelectionKey key) {
         SocketChannel socketChannel = (SocketChannel) key.channel();
         readBuffer.clear();
         int numRead = socketChannel.read(readBuffer);
 
-//        byte[] dataCopy = new byte[numRead];
-//        System.arraycopy(readBuffer.array(), 0, dataCopy, 0, numRead);
         try {
             Fix fix = new Fix(readBuffer.array(), numRead);
             System.err.println(fix);
             chain.handle(fix);
-//            SocketChannel socketChannel1 = channelMap.get(fix.getBrokerId());
-//            socketChannel1.write(ByteBuffer.wrap("responce".getBytes()));
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }
-
-
-//        Thread.sleep(5000);
-//        worker.processData(this, socketChannel, readBuffer.array(), numRead);
     }
-
+*//*
     private void write(SelectionKey key) throws IOException {
         SocketChannel socketChannel = (SocketChannel) key.channel();
         synchronized (pendingData) {
@@ -151,8 +123,8 @@ public class NioServer implements Runnable {
                 key.interestOps(SelectionKey.OP_READ);
             }
         }
-    }
-
+    }*//*
+*//*
     public void send(SocketChannel socket, byte[] data) {
         synchronized (changeRequests) {
             changeRequests.add(new ChangeRequest(socket, CHANGEOPS, OP_WRITE));
@@ -166,5 +138,5 @@ public class NioServer implements Runnable {
             }
         }
         selector.wakeup();
-    }
+    }*/
 }

@@ -2,27 +2,33 @@ package ru.router.chain;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import ru.router.model.Fix;
 import ru.router.repositories.TransactionRepository;
 
-import java.util.zip.CRC32;
-import java.util.zip.Checksum;
-
 @Data
 @Slf4j
-@Component
 public class Transactor implements Chain {
 
     private Chain next = null;
 
-    @Autowired
     private TransactionRepository repository;
 
     @Override
     synchronized public void handle(Fix message) {
+
+        if ("3".equals(message.getDealType()) || "4".equals(message.getDealType())) {
+            message.setStatus(true);
+        }
+
         repository.save(message);
-        next.handle(message);
+        System.err.println("message.getId(): " + message.getId());
+        if (next != null) {
+            next.handle(message);
+        } else {
+            Iterable<Fix> all = repository.findAll();
+            for (Fix fix : all) {
+                System.err.println(fix + " " + fix.getTime() + " " + fix.isStatus());
+            }
+        }
     }
 }

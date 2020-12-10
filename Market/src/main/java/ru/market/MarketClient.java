@@ -1,4 +1,6 @@
-package ru.bloker;
+package ru.market;
+
+import ru.market.model.Fix;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -12,9 +14,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
-public class NioClient {
+public class MarketClient {
 
-    static final int PORT = 5000;
+    static final int PORT = 5001;
     static final String ADDRESS = "localhost";
     private ByteBuffer buffer = ByteBuffer.allocate(128);
     private String id = null;
@@ -74,11 +76,23 @@ public class NioClient {
                 } else if (selectionKey.isReadable()) {
                     System.out.println("selectionKey.isReadable()");
                     buffer.clear();
-                    channel.read(buffer);
+                    int numRead = channel.read(buffer);
+
                     if (id == null) {
                         id = new String(buffer.array()).trim();
                     }
                     System.out.println("Received = " + new String(buffer.array()));
+                    Thread.sleep(10000);
+                    try {
+                        Fix fix = new Fix(buffer.array(), numRead);
+                        fix.setDealType("3");
+                        StringBuffer stringBuffer = new StringBuffer();
+                        stringBuffer.append(fix.toString()).append("|")
+                                .append(StringUtil.CHECK_SUM).append("=").append(getCheckSum(fix.toString()));
+                        channel.write(ByteBuffer.wrap(stringBuffer.toString().getBytes()));
+                    } catch (Exception e) {
+                        System.err.println(e.getMessage());
+                    }
                 } else if (selectionKey.isWritable()) {
                     System.out.println("selectionKey.isWritable()");
                     String line = queue.poll();
@@ -116,6 +130,6 @@ public class NioClient {
     }
 
     public static void main(String[] args) throws Exception {
-        new NioClient().run();
+        new MarketClient().run();
     }
 }

@@ -1,13 +1,9 @@
-package ru.router.model;
+package ru.market.model;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.router.StringUtil;
+import ru.market.StringUtil;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -15,12 +11,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Data
-@Entity
 @NoArgsConstructor
 public class Fix {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
     private String brokerId;
     private String dealType;
@@ -75,8 +68,7 @@ public class Fix {
                 .append(StringUtil.INSTRUMENT).append("=").append(instrument).append("|")
                 .append(StringUtil.PRICE).append("=").append(price).append("|")
                 .append(StringUtil.COUNT).append("=").append(count).append("|")
-                .append(StringUtil.MARKET_ID).append("=").append(marketId).append("|")
-                .append(StringUtil.CHECK_SUM).append("=").append(checkSum);
+                .append(StringUtil.MARKET_ID).append("=").append(marketId);
         return stringBuilder.toString();
     }
 

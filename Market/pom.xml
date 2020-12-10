@@ -47,7 +47,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>ru.market.ApplicationMarket</mainClass>
+                            <mainClass>ru.market.MarketClient</mainClass>
                         </manifest>
                     </archive>
                     <appendAssemblyId>false</appendAssemblyId>
@@ -55,6 +55,7 @@
             </plugin>
         </plugins>
     </build>
+
 
 
 </project>
