@@ -19,7 +19,7 @@ public class Fix {
     private String dealType;
     private String instrument;
     private String price;
-    private String count;
+    private Integer count;
     private String marketId;
     private String checkSum;
     private String input;
@@ -41,9 +41,15 @@ public class Fix {
         dealType = collect.get(StringUtil.DEAL_TYPE);
         instrument = collect.get(StringUtil.INSTRUMENT);
         price = collect.get(StringUtil.PRICE);
-        count = collect.get(StringUtil.COUNT);
+//        count = collect.get(StringUtil.COUNT);
+        setCount(collect.get(StringUtil.COUNT));
         marketId = collect.get(StringUtil.MARKET_ID);
         checkSum = collect.get(StringUtil.CHECK_SUM);
+        id = Integer.parseInt(collect.get("id"));
+    }
+
+    private void setCount(String count) {
+        this.count = Integer.parseInt(count);
     }
 
 
@@ -65,6 +71,7 @@ public class Fix {
         stringBuilder
                 .append(StringUtil.BROKER_ID).append("=").append(brokerId).append("|")
                 .append(StringUtil.DEAL_TYPE).append("=").append(dealType).append("|")
+                .append("id").append("=").append(id).append("|")
                 .append(StringUtil.INSTRUMENT).append("=").append(instrument).append("|")
                 .append(StringUtil.PRICE).append("=").append(price).append("|")
                 .append(StringUtil.COUNT).append("=").append(count).append("|")

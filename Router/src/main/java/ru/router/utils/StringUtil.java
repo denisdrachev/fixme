@@ -1,4 +1,4 @@
-package ru.router;
+package ru.router.utils;
 
 public class StringUtil {
 

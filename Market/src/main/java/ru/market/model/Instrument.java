@@ -9,5 +9,4 @@ public class Instrument {
 
     private String name;
     private int count;
-//    private int operationType;
 }

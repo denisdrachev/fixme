@@ -1,7 +1,6 @@
-package ru.router;
+package ru.router.active;
 
 import lombok.Getter;
-import ru.router.model.Fix;
 
 import java.nio.channels.SocketChannel;
 

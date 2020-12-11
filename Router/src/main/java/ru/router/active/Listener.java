@@ -1,22 +1,26 @@
-package ru.router;
+package ru.router.active;
 
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import ru.router.chain.Chain;
 import ru.router.model.Fix;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import static ru.router.ChangeRequest.CHANGEOPS;
+import static ru.router.active.ChangeRequest.CHANGEOPS;
 
+@Slf4j
 public class Listener implements Runnable {
 
     private ByteBuffer readBuffer = ByteBuffer.allocate(8192);
@@ -24,21 +28,14 @@ public class Listener implements Runnable {
     private Selector selector;
     private Chain chain;
     private TransactionRecovery transactionRecovery;
+    private ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+    private Validator validator = factory.getValidator();
 
 
     public Listener(Selector selector, Chain chain, TransactionRecovery transactionRecovery) {
         this.selector = selector;
         this.chain = chain;
         this.transactionRecovery = transactionRecovery;
-
-//        Transactor transactor = new Transactor();
-//        Sider sider = new Sider();
-//        Sender sender = new Sender();
-//
-//        chain = new Validator();
-//        chain.setNext(sider);
-//        chain.getNext().setNext(transactor);
-//        chain.getNext().getNext().setNext(sender);
     }
 
     @SneakyThrows
@@ -94,34 +91,56 @@ public class Listener implements Runnable {
         int numRead = socketChannel.read(readBuffer);
         if (numRead == -1) {
             Map<String, SocketChannel> channelMap = Action.channelMap;
-            int q = 0;
+
+            String removeKey = null;
 
             for (Map.Entry<String, SocketChannel> entry : channelMap.entrySet()) {
                 if (entry.getValue() == socketChannel) {
                     System.err.println(entry.getKey() + " disconnected");
+                    removeKey = entry.getKey();
+                    break;
                 }
             }
+            if (removeKey != null) {
+                channelMap.remove(removeKey);
+            }
+
             key.cancel();
             key.attach(null);
-            System.out.println("Someone disconnected");
+//            System.out.println("Someone disconnected");
             return;
         }
         System.err.println("numRead: " + numRead);
-        if (numRead < 44) {
+        if (numRead == 6) {
             try {
                 byte[] dataCopy = new byte[numRead];
                 System.arraycopy(readBuffer.array(), 0, dataCopy, 0, numRead);
-                String s1 = new String(dataCopy);
+                String newName = new String(dataCopy);
 
-                Iterable<Fix> transactionIfNeeded = transactionRecovery.getTransactionIfNeeded(socketChannel, s1);
-
-                for (Fix fix : transactionIfNeeded) {
-                    socketChannel.write(ByteBuffer.wrap(fix.toString().getBytes()));
-                    System.out.println("Sending success: " + fix);
-//                    log.info("Sending success");
-                    fix.setStatus(true);
-                    transactionRecovery.updateFixMessageTransaction(fix);
+                String oldName = null;
+                for (Map.Entry<String, SocketChannel> entry : Action.channelMap.entrySet()) {
+                    if (entry.getValue() == socketChannel) {
+                        oldName = entry.getKey();
+                        break;
+                    }
                 }
+
+                if (oldName != null && !Action.channelMap.containsKey(newName)) {
+                    Action.channelMap.put(newName, Action.channelMap.get(oldName));
+                    Action.channelMap.remove(oldName);
+                    log.info("Swap Broker name: old name = {}\tnew name = {}", oldName, newName);
+
+                    Iterable<Fix> transactionIfNeeded = transactionRecovery.getTransactionIfNeeded(socketChannel, newName);
+
+                    for (Fix fix : transactionIfNeeded) {
+                        socketChannel.write(ByteBuffer.wrap(fix.toString().getBytes()));
+                        System.out.println("Sending success: " + fix);
+//                    log.info("Sending success");
+                        fix.setStatus(true);
+                        transactionRecovery.updateFixMessageTransaction(fix);
+                    }
+                }
+
             } catch (Exception e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
@@ -130,7 +149,16 @@ public class Listener implements Runnable {
             try {
                 Fix fix = new Fix(readBuffer.array(), numRead);
                 System.err.println(fix);
-                chain.handle(fix);
+
+                Set<ConstraintViolation<Fix>> validate = validator.validate(fix);
+                String validatorMessage = validate.stream()
+                        .map(ConstraintViolation::getMessage)
+                        .collect(Collectors.joining(", "));
+
+                log.info("Validator message: ({}) {}", validatorMessage.length(), validatorMessage);
+                if (validatorMessage.length() == 0) {
+                    chain.handle(fix);
+                }
             } catch (Exception e) {
                 System.err.println(e.getMessage());
             }

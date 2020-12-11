@@ -21,14 +21,22 @@ public class Transactor implements Chain {
         }
 
         repository.save(message);
+
+        System.err.println();
+        Iterable<Fix> all = repository.findAll();
+        for (Fix fix : all) {
+            System.err.println(fix + " " + fix.getTime() + " " + fix.isStatus());
+        }
+        System.err.println();
+
         System.err.println("message.getId(): " + message.getId());
         if (next != null) {
             next.handle(message);
         } else {
-            Iterable<Fix> all = repository.findAll();
-            for (Fix fix : all) {
-                System.err.println(fix + " " + fix.getTime() + " " + fix.isStatus());
-            }
+//            Iterable<Fix> all = repository.findAll();
+//            for (Fix fix : all) {
+//                System.err.println(fix + " " + fix.getTime() + " " + fix.isStatus());
+//            }
         }
     }
 }

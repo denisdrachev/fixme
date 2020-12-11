@@ -2,7 +2,7 @@ package ru.router.chain;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import ru.router.Action;
+import ru.router.active.Action;
 import ru.router.model.Fix;
 
 @Data

@@ -1,17 +1,23 @@
 package ru.bloker;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Scanner;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
+@Slf4j
 public class NioClient {
 
     static final int PORT = 5000;
@@ -20,12 +26,11 @@ public class NioClient {
     private String id = null;
 
     private void run() throws Exception {
-        System.out.println("Start!");
-
+//        System.out.println("Start!");
         SocketChannel channel = SocketChannel.open();
         channel.configureBlocking(false);
         Selector selector = Selector.open();
-        SelectionKey register = channel.register(selector, SelectionKey.OP_CONNECT);//здесь объединяются селектор и канал (и вид активности: коннект)
+        channel.register(selector, SelectionKey.OP_CONNECT);//здесь объединяются селектор и канал (и вид активности: коннект)
         channel.connect(new InetSocketAddress(ADDRESS, PORT));
         BlockingQueue<String> queue = new ArrayBlockingQueue<>(2);
 
@@ -49,7 +54,7 @@ public class NioClient {
                     stringBuffer.append("49=").append(id).append("|").append(line);
                     String temp = stringBuffer.toString();
                     stringBuffer.append("|10=").append(getCheckSum(temp));
-                    System.err.println(stringBuffer);
+//                    System.err.println(stringBuffer);
                 }
                 try {
                     queue.put(stringBuffer.toString());
@@ -65,24 +70,26 @@ public class NioClient {
 
         while (true) {
             selector.select();
-            System.err.println("after selector.select()");
+//            System.err.println("after selector.select()");
             for (SelectionKey selectionKey : selector.selectedKeys()) {
                 if (selectionKey.isConnectable()) {
-                    System.out.println("selectionKey.isConnectable()");
+//                    System.out.println("selectionKey.isConnectable()");
                     channel.finishConnect();
+                    log.info("Connection success");
                     selectionKey.interestOps(SelectionKey.OP_WRITE);
                 } else if (selectionKey.isReadable()) {
-                    System.out.println("selectionKey.isReadable()");
+//                    System.out.println("selectionKey.isReadable()");
                     buffer.clear();
                     channel.read(buffer);
                     if (id == null) {
                         id = new String(buffer.array()).trim();
                     }
-                    System.out.println("Received = " + new String(buffer.array()));
+                    log.info("Received: {}", new String(buffer.array()));
                 } else if (selectionKey.isWritable()) {
-                    System.out.println("selectionKey.isWritable()");
+//                    System.out.println("selectionKey.isWritable()");
                     String line = queue.poll();
                     if (line != null) {
+                        log.info("Send: {}", line);
                         channel.write(ByteBuffer.wrap(line.getBytes()));
                     }
 //                    if ("49=100000|54=1|1=bax|15=100|38=11|56=100000|10=304290585".equals(line)) {

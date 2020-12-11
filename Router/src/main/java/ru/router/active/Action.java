@@ -1,4 +1,4 @@
-package ru.router;
+package ru.router.active;
 
 import org.springframework.stereotype.Service;
 import ru.router.chain.*;
@@ -17,6 +17,7 @@ public class Action {
     private final MarketChannel marketChannel;
 
     public static int index = 100000;
+    //TODO убрать этот параметр в листнер, переделать поиск для side
     public static Map<String, SocketChannel> channelMap = new ConcurrentHashMap<>();
     private ExecutorService executor = Executors.newFixedThreadPool(10);
     private Chain chain;
@@ -38,8 +39,8 @@ public class Action {
 
         chain = new Validator();
         chain.setNext(sider);
-        chain.getNext().setNext(sender);
-        chain.getNext().getNext().setNext(transactor);
+        chain.getNext().setNext(transactor);
+        chain.getNext().getNext().setNext(sender);
 //        chain.getNext().getNext().getNext().setNext(transactorAfter);
 
         Listener brokerListener = new Listener(brokerChannel.getSelector(), chain, transactionRecovery);

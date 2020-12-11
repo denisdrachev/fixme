@@ -1,8 +1,7 @@
-package ru.router;
+package ru.router.active;
 
 import lombok.Data;
 import lombok.SneakyThrows;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
 import ru.router.config.ConfigProperties;
 
@@ -14,16 +13,15 @@ import java.nio.channels.spi.SelectorProvider;
 
 @Data
 @Service
-public class BrokerChannel {
+public class MarketChannel {
 
     private Selector selector;
 
     @SneakyThrows
-    public BrokerChannel(ConfigProperties properties) {
-
+    public MarketChannel(ConfigProperties properties) {
         ServerSocketChannel serverChannel = ServerSocketChannel.open();
         serverChannel.configureBlocking(false);
-        InetSocketAddress isa = new InetSocketAddress(properties.getBrokerAddress(), properties.getBrokerPort());
+        InetSocketAddress isa = new InetSocketAddress(properties.getMarketAddress(), properties.getMarketPort());
         serverChannel.socket().bind(isa);
         selector = SelectorProvider.provider().openSelector();
         serverChannel.register(selector, SelectionKey.OP_ACCEPT);
