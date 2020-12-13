@@ -2,7 +2,6 @@ package ru.router.active;
 
 import lombok.Data;
 import lombok.SneakyThrows;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
 import ru.router.config.ConfigProperties;
 

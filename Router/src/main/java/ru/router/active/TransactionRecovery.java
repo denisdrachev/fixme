@@ -5,10 +5,9 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.router.model.Fix;
-import ru.router.repositories.TransactionRepository;
+import ru.router.repository.TransactionRepository;
 
 import java.nio.channels.SocketChannel;
-import java.util.List;
 
 @Data
 @Slf4j

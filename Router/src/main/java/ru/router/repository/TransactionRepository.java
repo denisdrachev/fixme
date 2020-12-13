@@ -1,4 +1,4 @@
-package ru.router.repositories;
+package ru.router.repository;
 
 import org.springframework.data.repository.CrudRepository;
 import ru.router.model.Fix;

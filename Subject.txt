@@ -1,3 +1,5 @@
+54=1|1=EUR|15=100|38=11|56=500000
+
 Goals
 
 One rainy day, you find out about the FIX Protocol and decide that you want to make a lot of money on the stock exchange by using your programming skills and making the computer do the heavy lifting for you. In order to do this you need some hardcore, lightning fast, enterprise grade tools. You will use these tools to simulate electronic trading and experiment with trading algorythms. You will have 3 independent components that will comunicate over the network:

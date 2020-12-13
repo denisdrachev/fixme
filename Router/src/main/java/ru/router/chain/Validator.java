@@ -21,15 +21,9 @@ public class Validator implements Chain {
     }
 
     private boolean validate(String message, String checkSum) {
-        // get bytes from string
         byte bytes[] = message.getBytes();
-
         Checksum checksum = new CRC32();
-
-        // update the current checksum with the specified array of bytes
         checksum.update(bytes, 0, bytes.length);
-
-        // get the current checksum value
         long checksumValue = checksum.getValue();
 
         String expectedCheckSum = String.valueOf(checksumValue);

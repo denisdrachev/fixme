@@ -8,6 +8,7 @@
     <artifactId>fix-me</artifactId>
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
+
     <modules>
         <module>Router</module>
         <module>Broker</module>
@@ -21,12 +22,10 @@
     </parent>
 
     <dependencies>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -34,7 +33,4 @@
             <scope>provided</scope>
         </dependency>
     </dependencies>
-
-
-
 </project>

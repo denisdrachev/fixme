@@ -1,4 +1,4 @@
-package ru.market;
+package ru.market.util;
 
 public class StringUtil {
 

@@ -9,8 +9,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -25,7 +23,7 @@ public class Fix {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private long id;
+    private Long id;
     @NotNull(message = "Значение поля 'brokerId' не может быть пустым.")
     @Length(min = 6, max = 6, message = "Допустимая длина brokerId - 6 символов")
     private String brokerId;
@@ -52,13 +50,10 @@ public class Fix {
     private boolean status = false;
     private Date time = Calendar.getInstance().getTime();
 
-    public Fix(byte[] bytesInput, int bytesCount) {
-        byte[] dataCopy = new byte[bytesCount];
-        System.arraycopy(bytesInput, 0, dataCopy, 0, bytesCount);
-        String s1 = new String(dataCopy);
-        int i = s1.lastIndexOf("|");
-        input = s1.substring(0, i);
-        String[] split = s1.split("\\|");
+    public Fix(String inputString) {
+        int i = inputString.lastIndexOf("|");
+        input = inputString.substring(0, i);
+        String[] split = inputString.split("\\|");
         Map<String, String> collect = Arrays.stream(split)
                 .map(s -> s.split("=", 2))
                 .collect(Collectors.toMap(a -> a[0], a -> a[1]));
@@ -68,24 +63,11 @@ public class Fix {
         price = collect.get(StringUtil.PRICE);
         count = collect.get(StringUtil.COUNT);
         marketId = collect.get(StringUtil.MARKET_ID);
-        checkSum = collect.get(StringUtil.CHECK_SUM);
+        checkSum = collect.get(StringUtil.CHECK_SUM).trim();
         if (collect.containsKey("id")) {
-            this.id = Integer.parseInt(collect.get("id"));
+            this.id = Long.parseLong(collect.get("id"));
         }
     }
-
-
-    //        49 - идентификатор брокера
-//    54 - тип сделки
-//        :1 - покупка
-//        :2 - продажа
-//
-//    1  - инструмент (имя его)
-//    15 - цена
-//    38 - количество лотов
-//    56 - идентификатор рынка
-//    10 - контрольная сумма
-
 
     @Override
     public String toString() {
@@ -98,7 +80,8 @@ public class Fix {
                 .append(StringUtil.PRICE).append("=").append(price).append("|")
                 .append(StringUtil.COUNT).append("=").append(count).append("|")
                 .append(StringUtil.MARKET_ID).append("=").append(marketId).append("|")
-                .append(StringUtil.CHECK_SUM).append("=").append(checkSum);
+                .append(StringUtil.CHECK_SUM).append("=").append(checkSum)
+                .append(" ");
         return stringBuilder.toString();
     }
 
