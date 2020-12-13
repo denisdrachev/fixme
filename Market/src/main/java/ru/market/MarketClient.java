@@ -71,6 +71,7 @@ public class MarketClient {
 
     private void readAndSend(SocketChannel channel) throws IOException {
         buffer.clear();
+
         int numRead = channel.read(buffer);
         log.info("Received: {}", new String(buffer.array()));
         if (numRead == 6) {
