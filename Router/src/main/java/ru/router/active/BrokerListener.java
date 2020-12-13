@@ -7,6 +7,7 @@ import ru.router.model.Fix;
 
 import javax.validation.ConstraintViolation;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -82,7 +83,7 @@ public class BrokerListener implements Runnable {
     @SneakyThrows
     private void read(SelectionKey key) {
         SocketChannel socketChannel = (SocketChannel) key.channel();
-        readBuffer.clear();
+        ((Buffer) readBuffer).clear();
         int numRead = socketChannel.read(readBuffer);
         if (numRead == -1) {
             closeConnection(key, socketChannel);

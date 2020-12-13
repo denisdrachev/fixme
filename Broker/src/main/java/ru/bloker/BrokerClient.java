@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -46,7 +47,7 @@ public class BrokerClient {
                 log.info("Connection success");
                 selectionKey.interestOps(SelectionKey.OP_WRITE);
             } else if (selectionKey.isReadable()) {
-                buffer.clear();
+                ((Buffer) buffer).clear();
                 int numRead = channel.read(buffer);
                 String inputString = getString(numRead);
                 if (id == null) {

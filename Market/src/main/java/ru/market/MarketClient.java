@@ -7,6 +7,7 @@ import ru.market.model.Instrument;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -70,7 +71,7 @@ public class MarketClient {
     }
 
     private void readAndSend(SocketChannel channel) throws IOException {
-        buffer.clear();
+        ((Buffer) buffer).clear();
 
         int numRead = channel.read(buffer);
         log.info("Received: {}", new String(buffer.array()));
