@@ -73,6 +73,9 @@ public class MarketListener implements Runnable {
         SocketChannel socketChannel = serverSocketChannel.accept();
         socketChannel.configureBlocking(false);
         socketChannel.register(selector, SelectionKey.OP_READ);
+        while (channelMap.containsKey(index)) {
+            index++;
+        }
         socketChannel.write(ByteBuffer.wrap(String.valueOf(index).getBytes()));
         channelMap.put(String.valueOf(index), socketChannel);
         log.info("Connection Market: {}", index);
