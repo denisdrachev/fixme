@@ -75,7 +75,6 @@ public class BrokerListener implements Runnable {
         socketChannel.configureBlocking(false);
         socketChannel.register(selector, SelectionKey.OP_READ);
         while (channelMap.containsKey(String.valueOf(index))) {
-            System.err.println("inc");
             index++;
         }
         socketChannel.write(ByteBuffer.wrap(String.valueOf(index).getBytes()));
@@ -133,6 +132,7 @@ public class BrokerListener implements Runnable {
         if (oldName != null && !channelMap.containsKey(input)) {
             channelMap.put(input, channelMap.get(oldName));
             channelMap.remove(oldName);
+            socketChannel.write(ByteBuffer.wrap(input.getBytes()));
             log.info("Swap Broker name: old name = {}\tnew name = {}", oldName, input);
 
             Iterable<Fix> transactions = transactionRecovery.getTransactionIfNeeded(socketChannel, input);

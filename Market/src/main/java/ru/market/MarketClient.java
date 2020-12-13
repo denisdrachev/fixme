@@ -78,6 +78,7 @@ public class MarketClient {
         if (numRead == 6) {
             if (id == null) {
                 id = new String(buffer.array()).trim();
+                log.info("Set new ID: {}", id);
             }
         } else {
             byte[] dataCopy = new byte[numRead];
@@ -110,10 +111,6 @@ public class MarketClient {
         } else if (line.equals("t10")) {
             log.info("Active Sleep 10 second");
             sleep = true;
-        }
-        if (line.length() == 6) {
-            id = line;
-            log.info("Set new ID: {}", id);
         }
     }
 

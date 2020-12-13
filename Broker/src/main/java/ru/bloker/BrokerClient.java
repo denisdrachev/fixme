@@ -50,10 +50,11 @@ public class BrokerClient {
                 ((Buffer) buffer).clear();
                 int numRead = channel.read(buffer);
                 String inputString = getString(numRead);
-                if (id == null) {
-                    id = new String(buffer.array()).trim();
-                }
                 log.info("Received: {}", inputString);
+                if (numRead == 6) {
+                    id = inputString;
+                    log.info("Set ID: {}", id);
+                }
             } else if (selectionKey.isWritable()) {
                 String line = queue.poll();
                 if (line != null) {
@@ -99,8 +100,6 @@ public class BrokerClient {
         if (line.length() == 6) {
             try {
                 Integer.parseInt(line);
-                id = line;
-                log.info("Set new ID: {}", id);
                 stringBuffer.append(line);
             } catch (Exception e) {
                 log.info("Incorrect input");
